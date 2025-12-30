@@ -1,0 +1,1 @@
+[0:00:01] | Templates: 1 | Hosts: 1 | RPS: 1 | Matched: 1 | Errors: 0 | Requests: 1/1 (100%)

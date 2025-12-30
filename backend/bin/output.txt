@@ -1,0 +1,1 @@
+[php-detect] [http] [info] http://testphp.vulnweb.com/ ["5.6.40"]

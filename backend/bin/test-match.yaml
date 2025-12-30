@@ -1,0 +1,13 @@
+id: status-match
+info:
+  name: Status Match
+  severity: info
+  author: debug
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+    matchers:
+      - type: status
+        status:
+          - 200
