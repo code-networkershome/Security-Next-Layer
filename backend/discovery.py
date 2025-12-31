@@ -31,12 +31,7 @@ class DiscoveryLayer:
         
         katana_abs_path = os.path.abspath(katana_bin)
 
-        # Katana command configuration (STRICT MATCHING Management Requirement Step 3)
-        # -d 2: Crawl depth = 2
-        # -jc: JavaScript parsing ENABLED
-        # -fx: Form extraction ENABLED
-        # -silent: Output only results
-        # -jsonl: Output in JSON lines for parsing
+        # Katana command configuration
         cmd = [
             katana_abs_path,
             "-u", target_url,
@@ -58,8 +53,10 @@ class DiscoveryLayer:
             if os.path.exists(output_file):
                 os.remove(output_file)
 
-            # Execution
-            result = subprocess.run(cmd, check=True, capture_output=True, timeout=120)
+            logger.info(f"Discovery timeout set to 600 seconds...")
+            
+            # Execution with increased timeout for slow networks
+            result = subprocess.run(cmd, check=True, capture_output=True, timeout=600)
 
             # Read JSONL output
             endpoints = []
@@ -102,8 +99,8 @@ class DiscoveryLayer:
             return unique_urls
 
         except subprocess.TimeoutExpired:
-             logger.error("Katana execution timed out.")
-             raise Exception("Discovery timed out")
+             logger.error("Katana execution timed out after 600 seconds. Target may be unreachable or slow.")
+             raise Exception("Discovery timed out - target may be unreachable or responding slowly")
         except subprocess.CalledProcessError as e:
             logger.error(f"Katana failed: {e.stderr.decode() if e.stderr else 'Unknown error'}")
             raise Exception(f"Discovery failed: {e.stderr.decode() if e.stderr else 'Unknown error'}")

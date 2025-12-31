@@ -124,7 +124,7 @@ def run_scan_job(scan_id: str, target_url: str, mode: str = "quick"):
         # discovery_layer puts output in "results/endpoints.txt"
         endpoints_file = os.path.join(current_dir, "results", "endpoints.txt")
         logger.info("Step 2: Detecting vulnerabilities")
-        raw_findings, stats = detection_layer.scan(endpoints_file)
+        raw_findings, stats = detection_layer.scan(endpoints_file, mode=mode)
 
         # 3. Validation Check (Management Requirement Step 5 - MANDATORY)
         # If benchmark target returns 0, we must FAIL FAST.
@@ -255,6 +255,22 @@ async def delete_scan(scan_id: str):
     save_history()
     
     return {"message": "Scan deleted successfully", "scan_id": scan_id}
+
+@app.post("/scan/{scan_id}/cancel")
+async def cancel_scan(scan_id: str):
+    """Cancel a running scan"""
+    if scan_id not in jobs:
+        raise HTTPException(status_code=404, detail="Scan ID not found")
+    
+    job = jobs[scan_id]
+    if job["status"] in ["pending", "running"]:
+        job["status"] = "cancelled"
+        job["error"] = "Scan was cancelled by user"
+        save_history()
+        logger.info(f"Scan {scan_id} cancelled by user")
+        return {"message": "Scan cancelled successfully", "scan_id": scan_id}
+    else:
+        return {"message": f"Scan already {job['status']}", "scan_id": scan_id}
 
 if __name__ == "__main__":
     import uvicorn

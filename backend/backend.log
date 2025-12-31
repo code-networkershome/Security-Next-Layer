@@ -1,24 +1,75 @@
-nohup: ignoring input
-INFO:__main__:Loaded 11 scans from history
-INFO:     Started server process [83611]
+INFO:__main__:Loaded 23 scans from history
+INFO:     Started server process [13390]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:__main__:Queueing scan ea427583-f3bf-431c-97fa-78c6cc1e6eb7 for http://testphp.vulnweb.com/ (mode: quick)
-INFO:     127.0.0.1:34278 - "POST /scan HTTP/1.1" 200 OK
-INFO:__main__:Starting job ea427583-f3bf-431c-97fa-78c6cc1e6eb7 for http://testphp.vulnweb.com/ (mode: quick)
+INFO:     127.0.0.1:40770 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59976 - "GET /scans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59976 - "GET /scans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45902 - "OPTIONS /scan HTTP/1.1" 200 OK
+INFO:__main__:Queueing scan fadd133e-b248-41a7-9dfd-490119bf6753 for http://testphp.vulnweb.com/ (mode: quick)
+INFO:     127.0.0.1:45918 - "POST /scan HTTP/1.1" 200 OK
+INFO:__main__:Starting job fadd133e-b248-41a7-9dfd-490119bf6753 for http://testphp.vulnweb.com/ (mode: quick)
 INFO:__main__:Step 1: Discovering endpoints for http://testphp.vulnweb.com/
 INFO:discovery:--- DISCOVERY START ---
 INFO:discovery:Target: http://testphp.vulnweb.com/
 INFO:discovery:Katana Binary: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/katana
 INFO:discovery:Executing: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/katana -u http://testphp.vulnweb.com/ -d 2 -jc -fx -silent -jsonl -o results/endpoints.json
+INFO:discovery:Discovery timeout set to 600 seconds...
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
 INFO:discovery:Discovery complete. Found 37 unique URLs.
-INFO:discovery:Sample discovered endpoints: ['http://testphp.vulnweb.com/cart.php', 'http://testphp.vulnweb.com/search.php?test=query', 'http://testphp.vulnweb.com/high', 'http://testphp.vulnweb.com/Templates/main_dynamic_template.dwt.php', 'http://testphp.vulnweb.com/AJAX/styles.css']
+INFO:discovery:Sample discovered endpoints: ['http://testphp.vulnweb.com/listproducts.php?cat=3', 'http://testphp.vulnweb.com/privacy.php', 'http://testphp.vulnweb.com/artists.php', 'http://testphp.vulnweb.com/userinfo.php', 'http://testphp.vulnweb.com/Mod_Rewrite_Shop/']
 INFO:__main__:Step 2: Detecting vulnerabilities
+INFO:detection:Quick scan: 6 Nuclei template groups activated
 INFO:detection:--- DETECTION START ---
 INFO:detection:Nuclei Binary (ABSOLUTE): /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei
 INFO:detection:Templates Root (ABSOLUTE): /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates
-INFO:detection:Executing: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei -l /home/kali/Desktop/NH/vulnerability_scanner/backend/results/endpoints.txt -severity info,low,medium,high,critical -rl 50 -timeout 10 -dast -silent -o /home/kali/Desktop/NH/vulnerability_scanner/backend/results/raw_findings.json -stats -stats-interval 1 -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/misconfiguration/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/exposures/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/vulnerabilities/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/dast/vulnerabilities/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/ssl/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/technologies/
+INFO:detection:Detection timeout set to 900 seconds (15 minutes)...
+INFO:detection:Executing: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei -l /home/kali/Desktop/NH/vulnerability_scanner/backend/results/endpoints.txt -severity info,low,medium,high,critical -rl 100 -timeout 30 -dast -silent -o /home/kali/Desktop/NH/vulnerability_scanner/backend/results/raw_findings.json -stats -stats-interval 5 -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/misconfiguration/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/exposures/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/dast/vulnerabilities/xss/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/dast/vulnerabilities/sqli/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/ssl/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/vulnerabilities/generic/
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
 INFO:detection:Templates Loaded: 0
 INFO:detection:Requests Sent: 0
 INFO:detection:Detection complete. Found 25 raw findings.
@@ -26,145 +77,17 @@ INFO:__main__:Step 3: Filtering findings
 INFO:filter:Prioritization complete. Selected 10 issues out of 25 raw findings.
 INFO:__main__:Step 4: AI Interpretation
 INFO:ai_layer:Requesting AI interpretation from OpenAI...
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
 INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
 INFO:ai_layer:AI interpretation complete.
-INFO:__main__:Job ea427583-f3bf-431c-97fa-78c6cc1e6eb7 completed successfully. Found 25 findings.
-INFO:     127.0.0.1:39166 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55672 - "GET /scans HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55686 - "GET /scans HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56232 - "OPTIONS /scan HTTP/1.1" 200 OK
-INFO:__main__:Queueing scan f3d7b6f4-b8ca-49d8-b39e-16bec455d67d for http://testphp.vulnweb.com/ (mode: quick)
-INFO:     127.0.0.1:56244 - "POST /scan HTTP/1.1" 200 OK
-INFO:__main__:Starting job f3d7b6f4-b8ca-49d8-b39e-16bec455d67d for http://testphp.vulnweb.com/ (mode: quick)
-INFO:__main__:Step 1: Discovering endpoints for http://testphp.vulnweb.com/
-INFO:discovery:--- DISCOVERY START ---
-INFO:discovery:Target: http://testphp.vulnweb.com/
-INFO:discovery:Katana Binary: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/katana
-INFO:discovery:Executing: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/katana -u http://testphp.vulnweb.com/ -d 2 -jc -fx -silent -jsonl -o results/endpoints.json
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:discovery:Discovery complete. Found 37 unique URLs.
-INFO:discovery:Sample discovered endpoints: ['http://testphp.vulnweb.com/cart.php', 'http://testphp.vulnweb.com/search.php?test=query', 'http://testphp.vulnweb.com/high', 'http://testphp.vulnweb.com/Templates/main_dynamic_template.dwt.php', 'http://testphp.vulnweb.com/AJAX/styles.css']
-INFO:__main__:Step 2: Detecting vulnerabilities
-INFO:detection:--- DETECTION START ---
-INFO:detection:Nuclei Binary (ABSOLUTE): /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei
-INFO:detection:Templates Root (ABSOLUTE): /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates
-INFO:detection:Executing: /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei -l /home/kali/Desktop/NH/vulnerability_scanner/backend/results/endpoints.txt -severity info,low,medium,high,critical -rl 50 -timeout 10 -dast -silent -o /home/kali/Desktop/NH/vulnerability_scanner/backend/results/raw_findings.json -stats -stats-interval 1 -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/misconfiguration/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/exposures/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/vulnerabilities/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/dast/vulnerabilities/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/ssl/ -t /home/kali/Desktop/NH/vulnerability_scanner/backend/bin/nuclei-templates/http/technologies/
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:detection:Templates Loaded: 0
-INFO:detection:Requests Sent: 0
-INFO:detection:Detection complete. Found 26 raw findings.
-INFO:__main__:Step 3: Filtering findings
-INFO:filter:Prioritization complete. Selected 10 issues out of 26 raw findings.
-INFO:__main__:Step 4: AI Interpretation
-INFO:ai_layer:Requesting AI interpretation from OpenAI...
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
-INFO:ai_layer:AI interpretation complete.
-INFO:__main__:Job f3d7b6f4-b8ca-49d8-b39e-16bec455d67d completed successfully. Found 26 findings.
-INFO:     127.0.0.1:56244 - "GET /scan/f3d7b6f4-b8ca-49d8-b39e-16bec455d67d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56244 - "GET /scans HTTP/1.1" 200 OK
+INFO:__main__:Job fadd133e-b248-41a7-9dfd-490119bf6753 completed successfully. Found 25 findings.
+INFO:     127.0.0.1:45918 - "GET /scan/fadd133e-b248-41a7-9dfd-490119bf6753 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45918 - "GET /scans HTTP/1.1" 200 OK

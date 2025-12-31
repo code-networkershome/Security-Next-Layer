@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
   Shield,
@@ -12,7 +12,8 @@ import {
   Zap,
   Radar,
   Bell,
-  Info
+  Info,
+  StopCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -44,6 +45,13 @@ function App() {
 
   // History state
   const [scanHistory, setScanHistory] = useState([]);
+
+  // URL validation state
+  const [urlError, setUrlError] = useState(null);
+
+  // Refs for intervals (to allow stopping)
+  const pollIntervalRef = useRef(null);
+  const progressIntervalRef = useRef(null);
 
   // Theme effect
   useEffect(() => {
@@ -88,13 +96,26 @@ function App() {
     if (e) e.preventDefault();
     if (!url) return;
 
+    // Quick URL validation
+    try {
+      const urlObj = new URL(url);
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        setUrlError('URL must start with http:// or https://');
+        return;
+      }
+    } catch {
+      setUrlError('Please enter a valid URL (e.g., http://example.com)');
+      return;
+    }
+    setUrlError(null);
+
     setLoading(true);
     setResult(null);
     setError(null);
     setCurrentStep('discovery');
     setCurrentView('scanner');
 
-    const progressInterval = simulateStepProgress();
+    progressIntervalRef.current = simulateStepProgress();
 
     try {
       // Start the scan
@@ -106,36 +127,51 @@ function App() {
       setCurrentScanId(scan_id);
 
       // Poll for results
-      const pollInterval = setInterval(async () => {
+      pollIntervalRef.current = setInterval(async () => {
         try {
           const statusResponse = await axios.get(`${API_BASE}/scan/${scan_id}`);
           const { status, result: scanResult, error: scanError } = statusResponse.data;
 
           if (status === 'completed') {
-            clearInterval(pollInterval);
-            clearInterval(progressInterval);
+            clearInterval(pollIntervalRef.current);
+            clearInterval(progressIntervalRef.current);
             setCurrentStep('report');
             setResult(scanResult);
             setLoading(false);
             loadScanHistory(); // Refresh history
-          } else if (status === 'failed') {
-            clearInterval(pollInterval);
-            clearInterval(progressInterval);
+          } else if (status === 'failed' || status === 'cancelled') {
+            clearInterval(pollIntervalRef.current);
+            clearInterval(progressIntervalRef.current);
             setError(scanError || 'Scan failed.');
             setLoading(false);
           }
         } catch (pollErr) {
-          clearInterval(pollInterval);
-          clearInterval(progressInterval);
+          clearInterval(pollIntervalRef.current);
+          clearInterval(progressIntervalRef.current);
           setError('Failed to check scan status.');
           setLoading(false);
         }
       }, 2000);
 
     } catch (err) {
-      clearInterval(progressInterval);
+      clearInterval(progressIntervalRef.current);
       setLoading(false);
       setError(err.response?.data?.detail || 'Failed to start scan.');
+    }
+  };
+
+  const handleStopScan = async () => {
+    if (!currentScanId) return;
+
+    try {
+      await axios.post(`${API_BASE}/scan/${currentScanId}/cancel`);
+      clearInterval(pollIntervalRef.current);
+      clearInterval(progressIntervalRef.current);
+      setLoading(false);
+      setError('Scan was stopped by user.');
+      loadScanHistory();
+    } catch (err) {
+      console.log('Failed to stop scan:', err.message);
     }
   };
 
@@ -283,7 +319,7 @@ function App() {
               placeholder="https://example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="input text-lg pl-12 pr-36"
+              className="input text-lg !pl-12 !pr-44"
               required
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-accent transition-colors" />
@@ -302,15 +338,15 @@ function App() {
           </div>
 
           {/* Scan Mode Toggle */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <Info className="w-4 h-4" />
               <span>Choose scan depth for your analysis</span>
             </div>
-            <div className="tabs">
+            <div className="tabs w-full sm:w-auto">
               <button
                 type="button"
-                className={`tab flex items-center gap-2 ${scanMode === 'quick' ? 'active' : ''}`}
+                className={`tab flex-1 sm:flex-none flex items-center justify-center gap-2 ${scanMode === 'quick' ? 'active' : ''}`}
                 onClick={() => setScanMode('quick')}
               >
                 <Zap className="w-4 h-4" />
@@ -318,7 +354,7 @@ function App() {
               </button>
               <button
                 type="button"
-                className={`tab flex items-center gap-2 ${scanMode === 'deep' ? 'active' : ''}`}
+                className={`tab flex-1 sm:flex-none flex items-center justify-center gap-2 ${scanMode === 'deep' ? 'active' : ''}`}
                 onClick={() => setScanMode('deep')}
               >
                 <Radar className="w-4 h-4" />
@@ -327,12 +363,41 @@ function App() {
             </div>
           </div>
         </form>
+
+        {/* URL Error */}
+        {urlError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 text-danger text-sm flex items-center gap-2"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            {urlError}
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Progress */}
       <AnimatePresence mode="wait">
         {loading && (
-          <ScanProgress currentStep={currentStep} isComplete={false} />
+          <div className="space-y-4">
+            <ScanProgress currentStep={currentStep} isComplete={false} />
+
+            {/* Stop Scan Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center"
+            >
+              <button
+                onClick={handleStopScan}
+                className="btn-danger py-3 px-6 flex items-center gap-2 text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all"
+              >
+                <StopCircle className="w-5 h-5" />
+                <span>Stop Scan</span>
+              </button>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -432,10 +497,10 @@ function App() {
                       >
                         <div className="flex gap-4">
                           <div className={`p-2 rounded-xl ${finding.severity === 'critical' || finding.severity === 'high'
-                              ? 'bg-danger/20 text-danger'
-                              : finding.severity === 'medium'
-                                ? 'bg-warning/20 text-warning'
-                                : 'bg-info/20 text-info'
+                            ? 'bg-danger/20 text-danger'
+                            : finding.severity === 'medium'
+                              ? 'bg-warning/20 text-warning'
+                              : 'bg-info/20 text-info'
                             }`}>
                             <AlertTriangle className="w-5 h-5" />
                           </div>

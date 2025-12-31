@@ -14,14 +14,26 @@ class DetectionLayer:
     - Hard timeout.
     """
 
-    # Template directories to scan (using -t instead of -tags for better coverage)
-    TEMPLATE_DIRS = [
-        "http/misconfiguration/",      # Missing security headers, misconfigs
-        "http/exposures/",             # Sensitive file/info exposure
-        "http/vulnerabilities/",       # Known vulnerabilities
-        "dast/vulnerabilities/",        # Generic vulnerabilities (SQLi, XSS, etc.)
-        "ssl/",                        # SSL/TLS issues
-        "http/technologies/",          # Technology detection
+    # STRICT ALLOWLIST for QUICK SCAN (Senior Engineer Requirement)
+    # STRICT ALLOWLIST for QUICK SCAN (Senior Engineer Requirement)
+    # Mapped to actual filesystem structure in nuclei-templates
+    QUICK_TEMPLATE_DIRS = [
+        "http/misconfiguration/",
+        "http/exposures/",
+        "dast/vulnerabilities/xss/",
+        "dast/vulnerabilities/sqli/",
+        "ssl/",
+        "http/vulnerabilities/generic/",
+    ]
+
+    # BROADER DIRS for DEEP SCAN
+    DEEP_TEMPLATE_DIRS = [
+        "http/misconfiguration/",
+        "http/exposures/",
+        "http/vulnerabilities/",
+        "dast/vulnerabilities/",
+        "ssl/",
+        "http/technologies/",
     ]
 
     # Explicitly forbidden tags (dangerous/extremely intrusive)
@@ -37,7 +49,7 @@ class DetectionLayer:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-    def scan(self, target_list_file: str):
+    def scan(self, target_list_file: str, mode: str = "quick"):
         """
         Runs Nuclei on the list of endpoints discovered by Katana.
         """
@@ -60,26 +72,42 @@ class DetectionLayer:
             nuclei_abs_path,
             "-l", target_list_file,
             "-severity", ",".join(self.SEVERITY_LEVELS),
-            "-rl", "50",
-            "-timeout", "10",
+            "-rl", "100",  # Increased rate limit for faster scanning
+            "-timeout", "30",  # Increased per-request timeout
             "-dast", # Required for generic vulnerabilities (SQLi, XSS)
             "-silent", # Display findings only (standard output)
             "-o", output_abs_path,
             "-stats",
-            "-stats-interval", "1"
+            "-stats-interval", "5"  # Less frequent stats to reduce noise
         ]
 
+        # Select template dirs based on mode
+        selected_dirs = self.QUICK_TEMPLATE_DIRS if mode == "quick" else self.DEEP_TEMPLATE_DIRS
+        
         # Add template directories from local templates
-        for t_dir in self.TEMPLATE_DIRS:
+        active_templates_count = 0
+        for t_dir in selected_dirs:
             full_t_path = os.path.join(templates_abs_path, t_dir)
             if os.path.exists(full_t_path):
                 cmd.extend(["-t", full_t_path])
+                # Note: We can't easily count exact files without traversing, 
+                # but we can count directory activations for logging.
+                active_templates_count += 1
             else:
                 logger.warning(f"Template directory missing: {full_t_path}")
+
+        # Requirement 7: Abort if 0 templates
+        if active_templates_count == 0:
+            logger.error(f"CRITICAL: {mode.capitalize()} scan aborted. 0 Nuclei templates activated.")
+            raise Exception(f"No templates found for {mode} scan")
+
+        # Requirement 6: Log active template groups
+        logger.info(f"{mode.capitalize()} scan: {active_templates_count} Nuclei template groups activated")
 
         logger.info(f"--- DETECTION START ---")
         logger.info(f"Nuclei Binary (ABSOLUTE): {nuclei_abs_path}")
         logger.info(f"Templates Root (ABSOLUTE): {templates_abs_path}")
+        logger.info(f"Detection timeout set to 900 seconds (15 minutes)...")
         logger.info(f"Executing: {' '.join(cmd)}")
 
         stats = {"templates_loaded": 0, "requests_sent": 0}
@@ -119,11 +147,13 @@ class DetectionLayer:
                             }
                             findings.append(finding)
 
-                stdout, stderr = process.communicate(timeout=30) # Finalize
+                stdout, stderr = process.communicate(timeout=900) # 15 minute timeout for thorough scans
             except subprocess.TimeoutExpired:
-                logger.error("Nuclei execution reached internal timeout. Terminating...")
+                logger.error("Nuclei execution reached 15 minute timeout. Terminating...")
                 process.kill()
                 stdout, stderr = process.communicate()
+                # Still return any findings collected so far
+                logger.info(f"Partial scan completed. Collected {len(findings)} findings before timeout.")
             
             # Parse stats from stderr (Management Requirement Step 1.3)
             if stderr:
