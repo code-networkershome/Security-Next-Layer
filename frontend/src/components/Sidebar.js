@@ -18,7 +18,7 @@ const navItems = [
     { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-function Sidebar({ currentView, setCurrentView, collapsed, setCollapsed }) {
+function Sidebar({ currentView, setCurrentView, collapsed, setCollapsed, onLogout, onLoginClick, session }) {
     return (
         <motion.aside
             className={`sidebar ${collapsed ? 'w-20' : 'w-64'}`}
@@ -100,21 +100,44 @@ function Sidebar({ currentView, setCurrentView, collapsed, setCollapsed }) {
             </button>
 
             {/* Footer */}
-            <div className="mt-auto pt-4 border-t border-white/5">
-                <button className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                    <LogOut className="w-5 h-5" />
-                    <AnimatePresence>
-                        {!collapsed && (
-                            <motion.span
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                Exit
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
-                </button>
+            <div className="mt-auto pt-4 border-t border-white/5 space-y-2">
+                {session ? (
+                    <button
+                        onClick={onLogout}
+                        className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        <AnimatePresence>
+                            {!collapsed && (
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    Logout
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </button>
+                ) : (
+                    <button
+                        onClick={onLoginClick}
+                        className="sidebar-link w-full text-accent hover:bg-accent/10"
+                    >
+                        <Shield className="w-5 h-5" />
+                        <AnimatePresence>
+                            {!collapsed && (
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    Login / Sign Up
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </button>
+                )}
             </div>
         </motion.aside>
     );

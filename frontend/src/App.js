@@ -24,6 +24,8 @@ import ScanHistory from './components/ScanHistory';
 import ThemeToggle from './components/ThemeToggle';
 import ScanProgress from './components/ScanProgress';
 import ExportButton from './components/ExportButton';
+import Auth from './components/Auth';
+import { supabase } from './supabaseClient';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -49,6 +51,10 @@ function App() {
   // URL validation state
   const [urlError, setUrlError] = useState(null);
 
+  // Authentication State
+  const [session, setSession] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
+
   // Refs for intervals (to allow stopping)
   const pollIntervalRef = useRef(null);
   const progressIntervalRef = useRef(null);
@@ -62,14 +68,34 @@ function App() {
     }
   }, [isDarkMode]);
 
-  // Load history on mount
+  // Authentication listener
   useEffect(() => {
-    loadScanHistory();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Load history on mount or when session changes
+  useEffect(() => {
+    if (session) {
+      loadScanHistory();
+    }
+  }, [session]);
+
   const loadScanHistory = async () => {
+    if (!session) return;
     try {
-      const response = await axios.get(`${API_BASE}/scans`);
+      const response = await axios.get(`${API_BASE}/scans`, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
       setScanHistory(response.data || []);
     } catch (err) {
       console.log('Could not load scan history:', err.message);
@@ -109,19 +135,20 @@ function App() {
     }
     setUrlError(null);
 
-    setLoading(true);
-    setResult(null);
-    setError(null);
-    setCurrentStep('discovery');
-    setCurrentView('scanner');
-
-    progressIntervalRef.current = simulateStepProgress();
-
     try {
+      setLoading(true);
+      setError(null);
+      setCurrentStep('discovery');
+      setCurrentView('scanner');
+      const progressInterval = simulateStepProgress();
+      progressIntervalRef.current = progressInterval;
+
       // Start the scan
       const startResponse = await axios.post(`${API_BASE}/scan`, {
         url,
         mode: scanMode
+      }, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
       });
       const { scan_id } = startResponse.data;
       setCurrentScanId(scan_id);
@@ -129,7 +156,9 @@ function App() {
       // Poll for results
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const statusResponse = await axios.get(`${API_BASE}/scan/${scan_id}`);
+          const statusResponse = await axios.get(`${API_BASE}/scan/${scan_id}`, {
+            headers: { Authorization: `Bearer ${session.access_token}` }
+          });
           const { status, result: scanResult, error: scanError } = statusResponse.data;
 
           if (status === 'completed') {
@@ -161,10 +190,12 @@ function App() {
   };
 
   const handleStopScan = async () => {
-    if (!currentScanId) return;
+    if (!currentScanId || !session) return;
 
     try {
-      await axios.post(`${API_BASE}/scan/${currentScanId}/cancel`);
+      await axios.post(`${API_BASE}/scan/${currentScanId}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
       clearInterval(pollIntervalRef.current);
       clearInterval(progressIntervalRef.current);
       setLoading(false);
@@ -609,12 +640,18 @@ function App() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? '' : 'light'}`}>
+      {showAuth && !session && (
+        <Auth onClose={() => setShowAuth(false)} />
+      )}
       {/* Sidebar */}
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
+        onLogout={() => supabase.auth.signOut()}
+        onLoginClick={() => setShowAuth(true)}
+        session={session}
       />
 
       {/* Main Content */}

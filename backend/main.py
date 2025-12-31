@@ -4,7 +4,7 @@ import logging
 import uuid
 import json
 from datetime import datetime
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 from typing import List, Optional, Dict, Any
@@ -15,6 +15,8 @@ from discovery import DiscoveryLayer
 from detection import DetectionLayer
 from filter import FilteringLayer
 from ai_layer import AIInterpretationLayer
+from auth_utils import get_current_user, User
+from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
@@ -47,6 +49,20 @@ discovery_layer = DiscoveryLayer()
 detection_layer = DetectionLayer()
 filter_layer = FilteringLayer()
 ai_layer = AIInterpretationLayer()
+
+# Supabase Client Initialization
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") # Use Service Role for backend write-through
+supabase: Client = None
+
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        logger.info("Supabase client initialized.")
+    except Exception as e:
+        logger.error(f"Failed to initialize Supabase client: {e}")
+else:
+    logger.warning("Supabase configuration missing. Database persistence disabled.")
 
 # -----------------
 # JOB STORE (In-Memory + File Persistence)
@@ -109,11 +125,20 @@ class ScanJobStatus(BaseModel):
     result: Optional[ScanResult] = None
     error: Optional[str] = None
 
-def run_scan_job(scan_id: str, target_url: str, mode: str = "quick"):
+def run_scan_job(scan_id: str, target_url: str, mode: str = "quick", user_id: str = None):
     logger.info(f"Starting job {scan_id} for {target_url} (mode: {mode})")
     jobs[scan_id]["status"] = "running"
     jobs[scan_id]["start_time"] = time.time()
+    if user_id:
+        jobs[scan_id]["user_id"] = user_id
     save_history()
+    
+    # 0. Sync Status to Supabase
+    if supabase and user_id:
+        try:
+            supabase.table("scans").update({"status": "running"}).eq("scan_id", scan_id).execute()
+        except Exception as e:
+            logger.error(f"Failed to update scan status in Supabase: {e}")
     
     try:
         # 1. DISCOVER (Management Step 3)
@@ -166,23 +191,58 @@ def run_scan_job(scan_id: str, target_url: str, mode: str = "quick"):
         save_history()
         logger.info(f"Job {scan_id} completed successfully. Found {len(raw_findings)} findings.")
 
+        # 7. Sync Completion to Supabase
+        if supabase and user_id:
+            try:
+                # Update scan record
+                supabase.table("scans").update({
+                    "status": "completed",
+                    "completed_at": datetime.now().isoformat()
+                }).eq("scan_id", scan_id).execute()
+                
+                # Insert results
+                for f in final_report:
+                    supabase.table("scan_results").insert({
+                        "scan_id": scan_id,
+                        "severity": f.get("severity"),
+                        "title": f.get("name"),
+                        "description": f.get("interpretation", {}).get("what_is_wrong"),
+                        "remediation": f.get("interpretation", {}).get("how_to_fix"),
+                        "raw_json": f
+                    }).execute()
+                logger.info(f"Synced {len(final_report)} results to Supabase.")
+            except Exception as e:
+                logger.error(f"Failed to sync to Supabase: {e}")
+
     except Exception as e:
         logger.error(f"Job {scan_id} failed: {str(e)}")
         jobs[scan_id]["status"] = "failed"
         jobs[scan_id]["error"] = str(e)
         save_history()
+        
+        # Sync failure to Supabase
+        if supabase and user_id:
+            try:
+                supabase.table("scans").update({
+                    "status": "failed",
+                    "error_message": str(e),
+                    "completed_at": datetime.now().isoformat()
+                }).eq("scan_id", scan_id).execute()
+            except Exception as se:
+                logger.error(f"Failed to sync failure to Supabase: {se}")
 
 @app.get("/")
 async def root():
     return {"message": "SNL API v2.0 is running. POST to /scan to start."}
 
 @app.post("/scan", response_model=JobCreatedResponse)
-async def start_scan(request: ScanRequest, background_tasks: BackgroundTasks):
+async def start_scan(request: ScanRequest, background_tasks: BackgroundTasks, user: User = Depends(get_current_user)):
     scan_id = str(uuid.uuid4())
-    logger.info(f"Queueing scan {scan_id} for {request.url} (mode: {request.mode})")
+    logger.info(f"User {user.id} queueing scan {scan_id} for {request.url}")
     
     jobs[scan_id] = {
         "scan_id": scan_id,
+        "user_id": user.id,
         "target": str(request.url),
         "mode": request.mode or "quick",
         "status": "pending",
@@ -192,7 +252,20 @@ async def start_scan(request: ScanRequest, background_tasks: BackgroundTasks):
     }
     save_history()
     
-    background_tasks.add_task(run_scan_job, scan_id, request.url, request.mode or "quick")
+    # Write to Supabase (Initial Record)
+    if supabase:
+        try:
+            supabase.table("scans").insert({
+                "scan_id": scan_id,
+                "user_id": user.id,
+                "target_url": str(request.url),
+                "scan_mode": request.mode or "quick",
+                "status": "pending"
+            }).execute()
+        except Exception as e:
+            logger.error(f"Failed to create scan record in Supabase: {e}")
+
+    background_tasks.add_task(run_scan_job, scan_id, request.url, request.mode or "quick", user.id)
     
     return JobCreatedResponse(
         scan_id=scan_id,
@@ -221,10 +294,54 @@ async def get_scan_status(scan_id: str):
     )
 
 @app.get("/scans", response_model=List[ScanJobStatus])
-async def get_all_scans():
-    """Get all scan history"""
+async def get_all_scans(user: User = Depends(get_current_user)):
+    """Get scan history for current user"""
+    # 1. Try Supabase first
+    if supabase:
+        try:
+            response = supabase.table("scans").select("*").eq("user_id", user.id).order("started_at", desc=True).execute()
+            db_scans = response.data
+            
+            history = []
+            for s in db_scans:
+                # Find in-memory job if available for real-time status
+                job = jobs.get(s["scan_id"])
+                
+                if job:
+                    result_data = None
+                    if job.get("result"):
+                        try:
+                            result_data = ScanResult(**job["result"])
+                        except: pass
+                    
+                    history.append(ScanJobStatus(
+                        scan_id=job["scan_id"],
+                        status=job["status"],
+                        target=job.get("target"),
+                        submitted_at=job.get("submitted_at"),
+                        result=result_data,
+                        error=job.get("error")
+                    ))
+                else:
+                    # Construct from DB data
+                    history.append(ScanJobStatus(
+                        scan_id=s["scan_id"],
+                        status=s["status"],
+                        target=s["target_url"],
+                        submitted_at=s.get("started_at"),
+                        result=None, 
+                        error=s.get("error_message")
+                    ))
+            return history
+        except Exception as e:
+            logger.error(f"Supabase history fetch failed: {e}")
+
+    # 2. Fallback to JSON (Filtered by user_id)
     result = []
     for scan_id, job in jobs.items():
+        if job.get("user_id") != user.id:
+            continue
+            
         scan_result = None
         if job.get("result"):
             try:
@@ -246,28 +363,60 @@ async def get_all_scans():
     return result
 
 @app.delete("/scan/{scan_id}")
-async def delete_scan(scan_id: str):
-    """Delete a scan from history"""
+async def delete_scan(scan_id: str, user: User = Depends(get_current_user)):
+    """Delete a scan from history (user must own it)"""
     if scan_id not in jobs:
+        # Check DB if not in memory
+        if supabase:
+            try:
+                check = supabase.table("scans").select("user_id").eq("scan_id", scan_id).execute()
+                if not check.data or check.data[0]["user_id"] != user.id:
+                    raise HTTPException(status_code=403, detail="Not authorized to delete this scan")
+                supabase.table("scans").delete().eq("scan_id", scan_id).execute()
+                return {"message": "Scan deleted successfully", "scan_id": scan_id}
+            except Exception as e:
+                logger.error(f"Failed to delete from Supabase: {e}")
+        
         raise HTTPException(status_code=404, detail="Scan ID not found")
+    
+    if jobs[scan_id].get("user_id") != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this scan")
     
     del jobs[scan_id]
     save_history()
     
+    if supabase:
+        try:
+            supabase.table("scans").delete().eq("scan_id", scan_id).execute()
+        except: pass
+    
     return {"message": "Scan deleted successfully", "scan_id": scan_id}
 
 @app.post("/scan/{scan_id}/cancel")
-async def cancel_scan(scan_id: str):
-    """Cancel a running scan"""
+async def cancel_scan(scan_id: str, user: User = Depends(get_current_user)):
+    """Cancel a running scan (user must own it)"""
     if scan_id not in jobs:
         raise HTTPException(status_code=404, detail="Scan ID not found")
     
     job = jobs[scan_id]
+    if job.get("user_id") != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this scan")
+
     if job["status"] in ["pending", "running"]:
         job["status"] = "cancelled"
         job["error"] = "Scan was cancelled by user"
         save_history()
-        logger.info(f"Scan {scan_id} cancelled by user")
+        
+        if supabase:
+            try:
+                supabase.table("scans").update({
+                    "status": "cancelled",
+                    "error_message": "Scan was cancelled by user",
+                    "completed_at": datetime.now().isoformat()
+                }).eq("scan_id", scan_id).execute()
+            except: pass
+            
+        logger.info(f"Scan {scan_id} cancelled by user {user.id}")
         return {"message": "Scan cancelled successfully", "scan_id": scan_id}
     else:
         return {"message": f"Scan already {job['status']}", "scan_id": scan_id}
