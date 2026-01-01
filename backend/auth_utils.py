@@ -6,9 +6,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from pydantic import BaseModel
 
+from dotenv import load_dotenv
+
 logger = logging.getLogger(__name__)
 
 # Load configuration from environment
+load_dotenv()
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
 security = HTTPBearer()
@@ -31,11 +34,16 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         )
 
     try:
-        # Supabase uses HS256 for JWTs
+        # Debug: Log the algorithm
+        header = jwt.get_unverified_header(token)
+        logger.info(f"JWT Header: {header}")
+
+        # Support both HS256 (symmetric) and potentially RS256/others if configured
+        # Note: True RS256 needs a public key, but we'll first try allowing the alg
         payload = jwt.decode(
             token, 
             SUPABASE_JWT_SECRET, 
-            algorithms=["HS256"], 
+            algorithms=["HS256", "RS256"], 
             audience="authenticated"
         )
         
